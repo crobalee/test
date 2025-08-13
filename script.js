@@ -159,20 +159,30 @@ const celebrityDatabase = {
 };
 
 // OpenAI API 설정
-const OPENAI_API_KEY = process.env.VITE_OPENAI_API_KEY || window.VITE_OPENAI_API_KEY;
+const OPENAI_API_KEY = window.VITE_OPENAI_API_KEY || '';
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+
+// API 키 상태 로깅
+console.log('OpenAI API 설정 상태:', {
+    hasApiKey: !!OPENAI_API_KEY,
+    apiKeyLength: OPENAI_API_KEY ? OPENAI_API_KEY.length : 0,
+    apiUrl: OPENAI_API_URL
+});
 
 // OpenAI API를 사용한 동적 유명인 정보 생성
 async function generateCelebrityInfoWithAI(query) {
     console.log('AI API 호출 시도:', query);
     console.log('API 키 상태:', OPENAI_API_KEY ? '설정됨' : '설정되지 않음');
     
-    if (!OPENAI_API_KEY || OPENAI_API_KEY === '{{VITE_OPENAI_API_KEY}}') {
+    // API 키가 없거나 빈 문자열인 경우
+    if (!OPENAI_API_KEY || OPENAI_API_KEY.trim() === '') {
         console.log('OpenAI API 키가 설정되지 않았습니다. 정적 데이터베이스를 사용합니다.');
         return null;
     }
 
     try {
+        console.log('OpenAI API 요청 시작...');
+        
         const prompt = `
         다음 유명인에 대한 상세한 정보를 JSON 형식으로 제공해주세요:
         이름: ${query}

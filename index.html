@@ -87,8 +87,14 @@
     </div>
 
     <script>
-        // 환경변수 설정 (Vercel에서 자동으로 치환됨)
-        window.VITE_OPENAI_API_KEY = '{{VITE_OPENAI_API_KEY}}';
+        // 환경변수 설정
+        window.VITE_OPENAI_API_KEY = '';
+        
+        // Vercel 환경변수 확인
+        console.log('환경변수 확인:', {
+            hasApiKey: !!window.VITE_OPENAI_API_KEY,
+            apiKeyLength: window.VITE_OPENAI_API_KEY ? window.VITE_OPENAI_API_KEY.length : 0
+        });
     </script>
     <script src="script.js"></script>
 </body>
