@@ -145,7 +145,7 @@
         }
         
         // 간단한 검색 테스트 함수
-        function testSearch(name = '김연아') {
+        async function testSearch(name = '김연아') {
             console.log('테스트 검색 시작:', name);
             
             const input = document.getElementById('celebrityInput');
@@ -165,11 +165,11 @@
             console.log('검색어 설정됨:', input.value);
             
             // 직접 검색 실행
-            searchCelebrityDirect();
+            await searchCelebrityDirect();
         }
         
         // 직접 검색 실행 함수
-        function searchCelebrityDirect() {
+        async function searchCelebrityDirect() {
             console.log('직접 검색 실행');
             
             const input = document.getElementById('celebrityInput');
@@ -198,7 +198,7 @@
             errorMessage.style.display = 'none';
             
             // 유명인 데이터베이스에서 검색
-            const celebrity = findCelebrityDirect(query);
+            const celebrity = await findCelebrityDirect(query);
             
             setTimeout(() => {
                 loading.style.display = 'none';
@@ -214,7 +214,7 @@
         }
         
         // 유명인 찾기 함수
-        function findCelebrityDirect(query) {
+        async function findCelebrityDirect(query) {
             // 유명인 데이터베이스
             const celebrityDatabase = {
                 '김연아': {
@@ -371,170 +371,145 @@
                 return celebrityDatabase[englishNames[englishQuery]];
             }
             
-            // 데이터베이스에 없는 사람을 위한 가상 정보 생성
-            return generateVirtualCelebrityInfo(query);
+            // 데이터베이스에 없는 사람을 위한 위키백과 검색
+            return await searchWikipediaOrEnglish(query);
         }
         
-        // 가상 유명인 정보 생성 함수
-        function generateVirtualCelebrityInfo(query) {
-            console.log('가상 유명인 정보 생성:', query);
+        // 위키백과에서 실제 정보 검색 함수
+        async function searchWikipedia(query) {
+            try {
+                console.log('위키백과 검색 시작:', query);
+                
+                // 위키백과 검색 API 호출
+                const searchUrl = `https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+                const response = await fetch(searchUrl);
+                
+                if (!response.ok) {
+                    console.log('위키백과 검색 실패:', response.status);
+                    return null;
+                }
+                
+                const data = await response.json();
+                console.log('위키백과 검색 결과:', data);
+                
+                if (data.type === 'standard') {
+                    return {
+                        name: data.title,
+                        title: data.description || '유명인',
+                        image: data.thumbnail?.source || getDefaultImage(),
+                        tags: ['위키백과', '공식정보'],
+                        basicInfo: {
+                            '설명': data.extract || '정보가 없습니다',
+                            '위키백과': 'https://ko.wikipedia.org/wiki/' + encodeURIComponent(data.title),
+                            '언어': '한국어'
+                        },
+                        achievements: [
+                            {
+                                title: '위키백과 정보',
+                                description: data.extract ? data.extract.substring(0, 200) + '...' : '상세 정보가 없습니다'
+                            }
+                        ],
+                        quotes: [
+                            '위키백과에서 제공하는 공식 정보입니다.',
+                            '더 자세한 정보는 위의 링크를 통해 확인하세요.'
+                        ]
+                    };
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('위키백과 검색 오류:', error);
+                return null;
+            }
+        }
+        
+        // 영어 위키백과 검색 (한국어 검색 실패 시)
+        async function searchEnglishWikipedia(query) {
+            try {
+                console.log('영어 위키백과 검색 시작:', query);
+                
+                const searchUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+                const response = await fetch(searchUrl);
+                
+                if (!response.ok) {
+                    console.log('영어 위키백과 검색 실패:', response.status);
+                    return null;
+                }
+                
+                const data = await response.json();
+                console.log('영어 위키백과 검색 결과:', data);
+                
+                if (data.type === 'standard') {
+                    return {
+                        name: data.title,
+                        title: data.description || 'Celebrity',
+                        image: data.thumbnail?.source || getDefaultImage(),
+                        tags: ['Wikipedia', 'Official Info'],
+                        basicInfo: {
+                            'Description': data.extract || 'No information available',
+                            'Wikipedia': 'https://en.wikipedia.org/wiki/' + encodeURIComponent(data.title),
+                            'Language': 'English'
+                        },
+                        achievements: [
+                            {
+                                title: 'Wikipedia Information',
+                                description: data.extract ? data.extract.substring(0, 200) + '...' : 'No detailed information available'
+                            }
+                        ],
+                        quotes: [
+                            'Information provided by Wikipedia.',
+                            'Please check the link above for more details.'
+                        ]
+                    };
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('영어 위키백과 검색 오류:', error);
+                return null;
+            }
+        }
+        
+        // 구글 검색 링크 생성
+        function createGoogleSearchLink(query) {
+            return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        }
+        
+        // 한국어 위키백과 먼저, 실패 시 영어 위키백과 검색
+        async function searchWikipediaOrEnglish(query) {
+            console.log('위키백과 검색 시작 (한국어 → 영어):', query);
             
-            // 랜덤 이미지 선택
-            const randomImages = [
+            // 한국어 위키백과 먼저 검색
+            let result = await searchWikipedia(query);
+            if (result) {
+                console.log('한국어 위키백과에서 정보 찾음');
+                return result;
+            }
+            
+            // 한국어 검색 실패 시 영어 위키백과 검색
+            console.log('한국어 위키백과 검색 실패, 영어 위키백과 검색 시도');
+            result = await searchEnglishWikipedia(query);
+            if (result) {
+                console.log('영어 위키백과에서 정보 찾음');
+                return result;
+            }
+            
+            // 모든 위키백과 검색 실패 시 null 반환
+            console.log('모든 위키백과 검색 실패');
+            return null;
+        }
+        
+        // 기본 이미지 반환
+        function getDefaultImage() {
+            const defaultImages = [
                 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
                 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face',
-                'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face',
-                'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face',
-                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face'
+                'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face'
             ];
-            
-            const randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
-            
-            // 가상 직업 생성
-            const possibleJobs = [
-                '연예인', '스포츠선수', '음악가', '배우', '모델', '방송인', '유튜버', '인플루언서',
-                '작가', '화가', '디자이너', '요리사', '의사', '변호사', '교수', '기업인'
-            ];
-            
-            const randomJob = possibleJobs[Math.floor(Math.random() * possibleJobs.length)];
-            
-            // 가상 태그 생성
-            const possibleTags = [
-                ['인기', '스타', '유명인'], ['스포츠', '운동', '건강'], ['음악', '예술', '창작'],
-                ['방송', '미디어', '엔터테인먼트'], ['교육', '지식', '전문가'], ['비즈니스', '경제', '성공']
-            ];
-            
-            const randomTags = possibleTags[Math.floor(Math.random() * possibleTags.length)];
-            
-            // 가상 기본 정보 생성
-            const randomBasicInfo = {
-                '직업': randomJob,
-                '분야': getFieldByJob(randomJob),
-                '활동지역': '대한민국',
-                '특징': getCharacteristicByJob(randomJob)
-            };
-            
-            // 가상 성과 생성
-            const randomAchievements = [
-                {
-                    title: getAchievementTitle(randomJob),
-                    description: getAchievementDescription(randomJob)
-                },
-                {
-                    title: '인기 상승',
-                    description: '소셜미디어에서 높은 관심도와 팔로워 수 증가'
-                }
-            ];
-            
-            // 가상 명언 생성
-            const randomQuotes = [
-                '꿈을 향해 나아가는 것이 가장 중요합니다.',
-                '최선을 다해 노력하면 좋은 결과가 있을 것입니다.',
-                '포기하지 말고 계속 도전하세요.'
-            ];
-            
-            return {
-                name: query,
-                title: randomJob,
-                image: randomImage,
-                tags: randomTags,
-                basicInfo: randomBasicInfo,
-                achievements: randomAchievements,
-                quotes: randomQuotes
-            };
+            return defaultImages[Math.floor(Math.random() * defaultImages.length)];
         }
         
-        // 직업별 분야 반환 함수
-        function getFieldByJob(job) {
-            const fieldMap = {
-                '연예인': '엔터테인먼트',
-                '스포츠선수': '스포츠',
-                '음악가': '음악',
-                '배우': '연극/영화',
-                '모델': '패션',
-                '방송인': '방송',
-                '유튜버': '디지털미디어',
-                '인플루언서': '소셜미디어',
-                '작가': '문학',
-                '화가': '미술',
-                '디자이너': '디자인',
-                '요리사': '요리',
-                '의사': '의료',
-                '변호사': '법률',
-                '교수': '교육',
-                '기업인': '경영'
-            };
-            return fieldMap[job] || '일반';
-        }
-        
-        // 직업별 특징 반환 함수
-        function getCharacteristicByJob(job) {
-            const characteristicMap = {
-                '연예인': '대중에게 사랑받는 매력적인 인물',
-                '스포츠선수': '뛰어난 운동능력과 경쟁정신',
-                '음악가': '창의적인 음악적 재능',
-                '배우': '다양한 역할을 소화하는 연기력',
-                '모델': '아름다운 외모와 패션 센스',
-                '방송인': '유쾌하고 친근한 진행 능력',
-                '유튜버': '창의적인 콘텐츠 제작 능력',
-                '인플루언서': '트렌드를 이끄는 영향력',
-                '작가': '깊이 있는 사고와 문학적 재능',
-                '화가': '독창적인 예술적 감각',
-                '디자이너': '혁신적인 디자인 아이디어',
-                '요리사': '정교한 요리 기술과 창의성',
-                '의사': '전문적인 의료 지식과 봉사정신',
-                '변호사': '정의로운 법률 지식과 변론 능력',
-                '교수': '풍부한 학문적 지식과 교육열정',
-                '기업인': '뛰어난 경영 능력과 리더십'
-            };
-            return characteristicMap[job] || '각 분야에서 뛰어난 능력을 보여주는 인물';
-        }
-        
-        // 직업별 성과 제목 반환 함수
-        function getAchievementTitle(job) {
-            const achievementMap = {
-                '연예인': '인기 상승',
-                '스포츠선수': '주요 대회 입상',
-                '음악가': '음악 차트 진입',
-                '배우': '연기상 수상',
-                '모델': '패션쇼 참여',
-                '방송인': '인기 프로그램 진행',
-                '유튜버': '구독자 수 증가',
-                '인플루언서': '브랜드 협업',
-                '작가': '베스트셀러 등극',
-                '화가': '개인전 개최',
-                '디자이너': '디자인상 수상',
-                '요리사': '요리 대회 입상',
-                '의사': '의학 논문 발표',
-                '변호사': '주요 사건 승소',
-                '교수': '학술상 수상',
-                '기업인': '사업 확장'
-            };
-            return achievementMap[job] || '주요 성과 달성';
-        }
-        
-        // 직업별 성과 설명 반환 함수
-        function getAchievementDescription(job) {
-            const descriptionMap = {
-                '연예인': '다양한 작품을 통해 대중의 사랑을 받으며 인지도 상승',
-                '스포츠선수': '국내외 주요 대회에서 우수한 성적을 거두며 명성을 얻음',
-                '음악가': '독창적인 음악으로 음악계에 새로운 바람을 일으킴',
-                '배우': '다양한 작품에서 뛰어난 연기로 시청자들의 호평을 받음',
-                '모델': '국내외 유명 패션쇼에 참여하며 글로벌한 활동을 펼침',
-                '방송인': '유쾌하고 친근한 진행으로 시청자들의 사랑을 받음',
-                '유튜버': '창의적인 콘텐츠로 많은 구독자들의 관심을 끌어모음',
-                '인플루언서': '트렌드를 이끄는 콘텐츠로 브랜드와의 협업을 성사시킴',
-                '작가': '깊이 있는 사고와 문학적 재능으로 독자들의 마음을 사로잡음',
-                '화가': '독창적인 예술 작품으로 미술계의 주목을 받음',
-                '디자이너': '혁신적인 디자인으로 업계의 새로운 기준을 제시함',
-                '요리사': '정교한 요리 기술로 미식가들의 찬사를 받음',
-                '의사': '전문적인 의료 서비스로 환자들의 신뢰를 얻음',
-                '변호사': '정의로운 법률 서비스로 의뢰인들의 만족을 이끌어냄',
-                '교수': '풍부한 학문적 지식으로 학생들의 성장을 이끌어냄',
-                '기업인': '뛰어난 경영 능력으로 회사의 지속적인 성장을 이끌어냄'
-            };
-            return descriptionMap[job] || '각 분야에서 뛰어난 성과를 거두며 명성을 얻음';
-        }
+
         
         // 직접 정보 표시 함수
         function displayCelebrityInfoDirect(celebrity) {
