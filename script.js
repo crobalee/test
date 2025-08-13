@@ -275,32 +275,92 @@ const popularCelebrities = [
     '김연아', '손흥민', 'BTS', '봉준호', '김치'
 ];
 
-// DOM 요소들
-const celebrityInput = document.getElementById('celebrityInput');
-const searchBtn = document.getElementById('searchBtn');
-const suggestions = document.getElementById('suggestions');
-const resultSection = document.getElementById('resultSection');
-const loading = document.getElementById('loading');
-const celebrityCard = document.getElementById('celebrityCard');
-const errorMessage = document.getElementById('errorMessage');
-const popularGrid = document.getElementById('popularGrid');
-
-// 이벤트 리스너 등록
-searchBtn.addEventListener('click', searchCelebrity);
-celebrityInput.addEventListener('input', showSuggestions);
-celebrityInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        searchCelebrity();
+// DOM 요소들을 가져오는 함수
+function getElement(id) {
+    const element = document.getElementById(id);
+    if (!element) {
+        console.error(`요소를 찾을 수 없음: ${id}`);
     }
-});
+    return element;
+}
 
 // 페이지 로드 시 인기 유명인 표시
 document.addEventListener('DOMContentLoaded', () => {
-    displayPopularCelebrities();
+    console.log('DOM 로드 완료');
+    initializeApp();
 });
+
+// 앱 초기화 함수
+function initializeApp() {
+    console.log('앱 초기화 시작');
+    
+    // DOM 요소들 확인
+    const elements = {
+        celebrityInput: document.getElementById('celebrityInput'),
+        searchBtn: document.getElementById('searchBtn'),
+        suggestions: document.getElementById('suggestions'),
+        resultSection: document.getElementById('resultSection'),
+        loading: document.getElementById('loading'),
+        celebrityCard: document.getElementById('celebrityCard'),
+        errorMessage: document.getElementById('errorMessage'),
+        popularGrid: document.getElementById('popularGrid')
+    };
+    
+    console.log('DOM 요소 상태:', elements);
+    
+    // 모든 요소가 존재하는지 확인
+    for (const [name, element] of Object.entries(elements)) {
+        if (!element) {
+            console.error(`DOM 요소를 찾을 수 없음: ${name}`);
+            return;
+        }
+    }
+    
+    // 이벤트 리스너 등록
+    elements.searchBtn.addEventListener('click', () => {
+        console.log('검색 버튼 클릭됨');
+        searchCelebrity();
+    });
+    
+    elements.celebrityInput.addEventListener('input', showSuggestions);
+    elements.celebrityInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            console.log('Enter 키 입력됨');
+            searchCelebrity();
+        }
+    });
+    
+    // 인기 유명인 표시
+    displayPopularCelebrities();
+    console.log('앱 초기화 완료');
+}
+
+// 테스트 검색 함수
+function testSearch() {
+    console.log('테스트 검색 시작');
+    const input = document.getElementById('celebrityInput');
+    if (input) {
+        input.value = '김연아';
+        searchCelebrity();
+    } else {
+        console.error('celebrityInput 요소를 찾을 수 없음');
+    }
+}
 
 // 유명인 검색 함수 (AI 통합)
 async function searchCelebrity() {
+    const celebrityInput = getElement('celebrityInput');
+    const resultSection = getElement('resultSection');
+    const loading = getElement('loading');
+    const celebrityCard = getElement('celebrityCard');
+    const errorMessage = getElement('errorMessage');
+    const suggestions = getElement('suggestions');
+    
+    if (!celebrityInput || !resultSection || !loading || !celebrityCard || !errorMessage || !suggestions) {
+        console.error('필요한 DOM 요소를 찾을 수 없습니다.');
+        return;
+    }
+    
     const query = celebrityInput.value.trim();
     console.log('검색 시작:', query);
     
