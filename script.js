@@ -159,12 +159,15 @@ const celebrityDatabase = {
 };
 
 // OpenAI API 설정
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.VITE_OPENAI_API_KEY || window.VITE_OPENAI_API_KEY;
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 // OpenAI API를 사용한 동적 유명인 정보 생성
 async function generateCelebrityInfoWithAI(query) {
-    if (!OPENAI_API_KEY) {
+    console.log('AI API 호출 시도:', query);
+    console.log('API 키 상태:', OPENAI_API_KEY ? '설정됨' : '설정되지 않음');
+    
+    if (!OPENAI_API_KEY || OPENAI_API_KEY === '{{VITE_OPENAI_API_KEY}}') {
         console.log('OpenAI API 키가 설정되지 않았습니다. 정적 데이터베이스를 사용합니다.');
         return null;
     }
@@ -289,7 +292,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // 유명인 검색 함수 (AI 통합)
 async function searchCelebrity() {
     const query = celebrityInput.value.trim();
-    if (!query) return;
+    console.log('검색 시작:', query);
+    
+    if (!query) {
+        console.log('검색어가 비어있습니다.');
+        return;
+    }
 
     // 검색 결과 섹션 표시
     resultSection.style.display = 'block';
@@ -299,12 +307,15 @@ async function searchCelebrity() {
     suggestions.style.display = 'none';
 
     try {
+        console.log('AI/정적 데이터베이스에서 검색 중...');
         // AI API 또는 정적 데이터베이스에서 검색
         const celebrity = await findCelebrity(query);
         
         if (celebrity) {
+            console.log('검색 결과 찾음:', celebrity.name);
             displayCelebrityInfo(celebrity);
         } else {
+            console.log('검색 결과 없음');
             showErrorMessage();
         }
     } catch (error) {
