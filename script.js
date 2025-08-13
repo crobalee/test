@@ -1,4 +1,4 @@
-// 유명인 데이터베이스
+// 유명인 데이터베이스 (폴백용)
 const celebrityDatabase = {
     '김연아': {
         name: '김연아',
@@ -158,6 +158,105 @@ const celebrityDatabase = {
     }
 };
 
+// OpenAI API 설정
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+
+// OpenAI API를 사용한 동적 유명인 정보 생성
+async function generateCelebrityInfoWithAI(query) {
+    if (!OPENAI_API_KEY) {
+        console.log('OpenAI API 키가 설정되지 않았습니다. 정적 데이터베이스를 사용합니다.');
+        return null;
+    }
+
+    try {
+        const prompt = `
+        다음 유명인에 대한 상세한 정보를 JSON 형식으로 제공해주세요:
+        이름: ${query}
+        
+        다음 형식으로 응답해주세요:
+        {
+            "name": "이름",
+            "title": "직업/직함",
+            "image": "https://images.unsplash.com/photo-...",
+            "tags": ["태그1", "태그2", "태그3"],
+            "basicInfo": {
+                "출생": "출생 정보",
+                "국적": "국적",
+                "직업": "직업",
+                "대표작": "대표작"
+            },
+            "achievements": [
+                {
+                    "title": "성과 제목",
+                    "description": "성과 설명"
+                }
+            ],
+            "quotes": [
+                "명언1",
+                "명언2",
+                "명언3"
+            ]
+        }
+        
+        한국어로 응답하고, 실제 정보를 바탕으로 정확하게 작성해주세요.
+        `;
+
+        const response = await fetch(OPENAI_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'gpt-3.5-turbo',
+                messages: [
+                    {
+                        role: 'system',
+                        content: '당신은 한국의 유명인에 대한 정보를 제공하는 전문가입니다. 정확하고 상세한 정보를 제공해주세요.'
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                max_tokens: 1000,
+                temperature: 0.7
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`OpenAI API 오류: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+        
+        // JSON 파싱 시도
+        try {
+            const parsedData = JSON.parse(content);
+            return parsedData;
+        } catch (parseError) {
+            console.error('JSON 파싱 오류:', parseError);
+            // 파싱 실패 시 AI 응답을 텍스트로 반환
+            return {
+                name: query,
+                title: 'AI 생성 정보',
+                image: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=400&fit=crop',
+                tags: ['AI 생성'],
+                basicInfo: {
+                    'AI 응답': content.substring(0, 200) + '...'
+                },
+                achievements: [],
+                quotes: []
+            };
+        }
+    } catch (error) {
+        console.error('OpenAI API 오류:', error);
+        return null;
+    }
+}
+
 // 인기 유명인 목록
 const popularCelebrities = [
     '김연아', '손흥민', 'BTS', '봉준호', '김치'
@@ -187,8 +286,8 @@ document.addEventListener('DOMContentLoaded', () => {
     displayPopularCelebrities();
 });
 
-// 유명인 검색 함수
-function searchCelebrity() {
+// 유명인 검색 함수 (AI 통합)
+async function searchCelebrity() {
     const query = celebrityInput.value.trim();
     if (!query) return;
 
@@ -199,22 +298,32 @@ function searchCelebrity() {
     errorMessage.style.display = 'none';
     suggestions.style.display = 'none';
 
-    // 로딩 시뮬레이션
-    setTimeout(() => {
-        const celebrity = findCelebrity(query);
+    try {
+        // AI API 또는 정적 데이터베이스에서 검색
+        const celebrity = await findCelebrity(query);
         
         if (celebrity) {
             displayCelebrityInfo(celebrity);
         } else {
             showErrorMessage();
         }
-        
+    } catch (error) {
+        console.error('검색 오류:', error);
+        showErrorMessage();
+    } finally {
         loading.style.display = 'none';
-    }, 1000);
+    }
 }
 
-// 유명인 찾기 함수
-function findCelebrity(query) {
+// 유명인 찾기 함수 (AI 우선, 폴백으로 정적 데이터)
+async function findCelebrity(query) {
+    // 1. 먼저 AI API로 정보 생성 시도
+    const aiResult = await generateCelebrityInfoWithAI(query);
+    if (aiResult) {
+        return aiResult;
+    }
+    
+    // 2. AI API 실패 시 정적 데이터베이스에서 검색
     // 정확한 이름 매칭
     if (celebrityDatabase[query]) {
         return celebrityDatabase[query];
@@ -318,10 +427,10 @@ function showSuggestions() {
 }
 
 // 제안사항 선택 함수
-function selectSuggestion(name) {
+async function selectSuggestion(name) {
     celebrityInput.value = name;
     suggestions.style.display = 'none';
-    searchCelebrity();
+    await searchCelebrity();
 }
 
 // 인기 유명인 표시 함수
@@ -339,9 +448,9 @@ function displayPopularCelebrities() {
 }
 
 // 이름으로 검색 함수
-function searchByName(name) {
+async function searchByName(name) {
     celebrityInput.value = name;
-    searchCelebrity();
+    await searchCelebrity();
 }
 
 // 검색창 외부 클릭 시 제안사항 숨기기
@@ -378,10 +487,10 @@ function loadSearchHistory() {
 
 // 검색 시 히스토리 저장
 const originalSearchCelebrity = searchCelebrity;
-searchCelebrity = function() {
+searchCelebrity = async function() {
     const query = celebrityInput.value.trim();
     if (query) {
         saveSearchHistory(query);
     }
-    originalSearchCelebrity();
+    await originalSearchCelebrity();
 };
