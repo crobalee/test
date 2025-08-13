@@ -437,43 +437,63 @@ async function findCelebrity(query) {
 
 // 유명인 정보 표시 함수
 function displayCelebrityInfo(celebrity) {
+    const celebrityCard = getElement('celebrityCard');
+    if (!celebrityCard) {
+        console.error('celebrityCard 요소를 찾을 수 없습니다.');
+        return;
+    }
+    
     // 기본 정보 설정
-    document.getElementById('celebrityName').textContent = celebrity.name;
-    document.getElementById('celebrityTitle').textContent = celebrity.title;
-    document.getElementById('celebrityImage').src = celebrity.image;
-    document.getElementById('celebrityImage').alt = `${celebrity.name} 이미지`;
+    const nameElement = document.getElementById('celebrityName');
+    const titleElement = document.getElementById('celebrityTitle');
+    const imageElement = document.getElementById('celebrityImage');
+    const tagsContainer = document.getElementById('celebrityTags');
+    const basicInfoContainer = document.getElementById('basicInfo');
+    const achievementsContainer = document.getElementById('achievements');
+    const quotesContainer = document.getElementById('quotes');
+    
+    if (nameElement) nameElement.textContent = celebrity.name;
+    if (titleElement) titleElement.textContent = celebrity.title;
+    if (imageElement) {
+        imageElement.src = celebrity.image;
+        imageElement.alt = `${celebrity.name} 이미지`;
+    }
     
     // 태그 설정
-    const tagsContainer = document.getElementById('celebrityTags');
-    tagsContainer.innerHTML = celebrity.tags.map(tag => 
-        `<span class="tag">${tag}</span>`
-    ).join('');
+    if (tagsContainer) {
+        tagsContainer.innerHTML = celebrity.tags.map(tag => 
+            `<span class="tag">${tag}</span>`
+        ).join('');
+    }
     
     // 기본 정보 설정
-    const basicInfoContainer = document.getElementById('basicInfo');
-    basicInfoContainer.innerHTML = Object.entries(celebrity.basicInfo).map(([key, value]) => 
-        `<div class="info-item">
-            <h4>${key}</h4>
-            <p>${value}</p>
-        </div>`
-    ).join('');
+    if (basicInfoContainer) {
+        basicInfoContainer.innerHTML = Object.entries(celebrity.basicInfo).map(([key, value]) => 
+            `<div class="info-item">
+                <h4>${key}</h4>
+                <p>${value}</p>
+            </div>`
+        ).join('');
+    }
     
     // 성과 설정
-    const achievementsContainer = document.getElementById('achievements');
-    achievementsContainer.innerHTML = celebrity.achievements.map(achievement => 
-        `<div class="achievement-item">
-            <h4>${achievement.title}</h4>
-            <p>${achievement.description}</p>
-        </div>`
-    ).join('');
+    if (achievementsContainer) {
+        achievementsContainer.innerHTML = celebrity.achievements.map(achievement => 
+            `<div class="achievement-item">
+                <h4>${achievement.title}</h4>
+                <p>${achievement.description}</p>
+            </div>`
+        ).join('');
+    }
     
     // 명언 설정
-    const quotesContainer = document.getElementById('quotes');
-    quotesContainer.innerHTML = celebrity.quotes.map(quote => 
-        `<div class="quote-item">
-            <p>${quote}</p>
-        </div>`
-    ).join('');
+    if (quotesContainer) {
+        quotesContainer.innerHTML = celebrity.quotes.map(quote => 
+            `<div class="quote-item">
+                <p>${quote}</p>
+            </div>`
+        ).join('');
+    }
     
     // 카드 표시
     celebrityCard.style.display = 'block';
@@ -481,11 +501,24 @@ function displayCelebrityInfo(celebrity) {
 
 // 에러 메시지 표시 함수
 function showErrorMessage() {
-    errorMessage.style.display = 'block';
+    const errorMessage = getElement('errorMessage');
+    if (errorMessage) {
+        errorMessage.style.display = 'block';
+    } else {
+        console.error('errorMessage 요소를 찾을 수 없습니다.');
+    }
 }
 
 // 제안사항 표시 함수
 function showSuggestions() {
+    const celebrityInput = getElement('celebrityInput');
+    const suggestions = getElement('suggestions');
+    
+    if (!celebrityInput || !suggestions) {
+        console.error('필요한 DOM 요소를 찾을 수 없습니다.');
+        return;
+    }
+    
     const query = celebrityInput.value.trim();
     
     if (!query) {
@@ -516,6 +549,12 @@ async function selectSuggestion(name) {
 
 // 인기 유명인 표시 함수
 function displayPopularCelebrities() {
+    const popularGrid = getElement('popularGrid');
+    if (!popularGrid) {
+        console.error('popularGrid 요소를 찾을 수 없습니다.');
+        return;
+    }
+    
     popularGrid.innerHTML = popularCelebrities.map(name => {
         const celebrity = celebrityDatabase[name];
         return `
@@ -530,6 +569,11 @@ function displayPopularCelebrities() {
 
 // 이름으로 검색 함수
 async function searchByName(name) {
+    const celebrityInput = getElement('celebrityInput');
+    if (!celebrityInput) {
+        console.error('celebrityInput 요소를 찾을 수 없습니다.');
+        return;
+    }
     celebrityInput.value = name;
     await searchCelebrity();
 }
@@ -569,6 +613,11 @@ function loadSearchHistory() {
 // 검색 시 히스토리 저장
 const originalSearchCelebrity = searchCelebrity;
 searchCelebrity = async function() {
+    const celebrityInput = getElement('celebrityInput');
+    if (!celebrityInput) {
+        console.error('celebrityInput 요소를 찾을 수 없습니다.');
+        return;
+    }
     const query = celebrityInput.value.trim();
     if (query) {
         saveSearchHistory(query);
