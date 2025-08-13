@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유명인 소개 앱</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-star"></i> 유명인 소개 앱</h1>
+            <p>유명인의 이름을 입력하면 상세한 정보를 제공합니다</p>
+        </header>
+
+        <main class="main">
+            <div class="search-section">
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="celebrityInput" 
+                        placeholder="유명인의 이름을 입력하세요 (예: 김연아, 손흥민, BTS...)"
+                        autocomplete="off"
+                    >
+                    <button id="searchBtn" class="search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="suggestions" id="suggestions"></div>
+            </div>
+
+            <div class="result-section" id="resultSection" style="display: none;">
+                <div class="loading" id="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>정보를 검색하고 있습니다...</p>
+                </div>
+                
+                <div class="celebrity-card" id="celebrityCard" style="display: none;">
+                    <div class="card-header">
+                        <div class="celebrity-image">
+                            <img id="celebrityImage" src="" alt="유명인 이미지">
+                        </div>
+                        <div class="celebrity-info">
+                            <h2 id="celebrityName"></h2>
+                            <p id="celebrityTitle"></p>
+                            <div class="tags" id="celebrityTags"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="info-section">
+                            <h3><i class="fas fa-info-circle"></i> 기본 정보</h3>
+                            <div class="info-grid" id="basicInfo"></div>
+                        </div>
+                        
+                        <div class="info-section">
+                            <h3><i class="fas fa-trophy"></i> 주요 성과</h3>
+                            <div class="achievements" id="achievements"></div>
+                        </div>
+                        
+                        <div class="info-section">
+                            <h3><i class="fas fa-quote-left"></i> 인기 명언</h3>
+                            <div class="quotes" id="quotes"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="error-message" id="errorMessage" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>검색 결과를 찾을 수 없습니다</h3>
+                    <p>다른 이름으로 다시 검색해보세요.</p>
+                </div>
+            </div>
+
+            <div class="popular-section">
+                <h3>인기 유명인</h3>
+                <div class="popular-grid" id="popularGrid"></div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 유명인 소개 앱. 모든 정보는 참고용입니다.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

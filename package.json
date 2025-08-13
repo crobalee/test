@@ -1,0 +1,17 @@
+{
+  "name": "celebrity-app",
+  "version": "1.0.0",
+  "description": "유명인 소개 앱",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Build completed'",
+    "start": "vercel dev"
+  },
+  "keywords": ["celebrity", "vercel", "static"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}
